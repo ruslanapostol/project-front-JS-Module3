@@ -96,7 +96,18 @@
         // Clear existing buttons before adding new ones
         pagingButtons.innerHTML = '';
 
-        // Create and append new pagination buttons
+        const prevButton = document.createElement('button');
+        prevButton.innerText = 'Prev';
+        prevButton.disabled = currentPage === 1;
+        prevButton.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                fetchPlayers(currentPage, accountsPerPage);
+            }
+        });
+        pagingButtons.appendChild(prevButton);
+
+        // Add page number buttons
         for (let page = 1; page <= totalPages; page++) {
             const button = document.createElement('button');
             button.innerText = page;
@@ -104,28 +115,24 @@
                 currentPage = page;
                 fetchPlayers(currentPage, accountsPerPage);
             });
+
+            // Highlight the current page button
+            if (page === currentPage) {
+                button.className = 'active'; // Add 'active' class to highlight the current page
+            }
+
             pagingButtons.appendChild(button);
         }
 
-        // Optionally, add 'Prev' and 'Next' buttons
-        const prevButton = document.createElement('button');
-        prevButton.innerText = 'Prev';
-        prevButton.onclick = () => {
-            if (currentPage > 1) {
-                currentPage--;
-                fetchPlayers(currentPage, accountsPerPage);
-            }
-        };
-        pagingButtons.insertBefore(prevButton, pagingButtons.firstChild); // Add 'Prev' at the beginning
-
         const nextButton = document.createElement('button');
         nextButton.innerText = 'Next';
-        nextButton.onclick = () => {
+        nextButton.disabled = currentPage === totalPages;
+        nextButton.addEventListener('click', () => {
             if (currentPage < totalPages) {
                 currentPage++;
                 fetchPlayers(currentPage, accountsPerPage);
             }
-        };
+        });
         pagingButtons.appendChild(nextButton); // Add 'Next' at the end
 
         console.log('Total pages:', totalPages);
