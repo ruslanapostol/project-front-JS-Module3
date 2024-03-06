@@ -1,0 +1,14 @@
+#rpgTable {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+#rpgTable th, #rpgTable td {
+    border: 1px solid black;
+    text-align: left;
+    padding: 8px;
+}
+
+#rpgTable tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
