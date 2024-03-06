@@ -18,6 +18,9 @@
         <th>Level</th>
         <th>Birthday</th>
         <th>Banned</th>
+        <th>Edit</th>
+        <th>Delete</th>
+
     </tr>
     </thead>
     <tbody>
@@ -49,13 +52,14 @@
 <script>
     let currentPage = 1;
     let accountsPerPage = parseInt(document.getElementById('accountCountDropdown').value, 10);
+
     function fetchPlayers(pageNumber, pageSize) {
         const url = `/rest/players?pageNumber=${pageNumber}&pageSize=${pageSize}`;
         fetch(url)
             .then(response => response.json())
             .then(players => {
                 const table = document.getElementById('rpgTable').getElementsByTagName('tbody')[0];
-                table.innerHTML = "";
+                table.innerHTML = ""; // Clear the table body before adding new rows
                 players.forEach((player, index) => {
                     const row = table.insertRow();
                     const cell1 = row.insertCell(0);
@@ -66,7 +70,10 @@
                     const cell6 = row.insertCell(5);
                     const cell7 = row.insertCell(6);
                     const cell8 = row.insertCell(7);
-                    cell1.innerHTML = ((pageNumber -1) * pageSize) + index + 1;
+                    const editCell = row.insertCell(8);
+                    const deleteCell = row.insertCell(9);
+
+                    cell1.innerHTML = ((pageNumber - 1) * pageSize) + index + 1;
                     cell2.innerHTML = player.name;
                     cell3.innerHTML = player.title;
                     cell4.innerHTML = player.race;
@@ -74,10 +81,44 @@
                     cell6.innerHTML = player.level;
                     cell7.innerHTML = new Date(player.birthday).toLocaleDateString();
                     cell8.innerHTML = player.banned ? 'Yes' : 'No';
+
+                    // Edit icon
+                    const editIcon = document.createElement('img');
+                    editIcon.src = '/img/colored_edit.jpg';
+                    editIcon.alt = 'Edit';
+                    editIcon.className = 'action-icon';
+                    editIcon.addEventListener('click', () => editPlayer(player.id));
+                    editCell.appendChild(editIcon);
+
+                    // Delete icon
+                    const deleteIcon = document.createElement('img');
+                    deleteIcon.src = '/img/colored_delete.jpg';
+                    deleteIcon.alt = 'Delete';
+                    deleteIcon.className = 'action-icon';
+                    deleteIcon.addEventListener('click', () => deleteAccount(player.id));
+                    deleteCell.appendChild(deleteIcon);
                 });
             })
             .catch(error => console.error('Error fetching players:', error));
     }
+
+    function deleteAccount(accountId) {
+        if (confirm('Are you sure you want to delete this account?')) { // Confirm deletion with the user
+            fetch(`/rest/players/${accountId}`, {
+                method: 'DELETE'
+            })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Account deleted successfully.');
+                        fetchPlayers(currentPage, accountsPerPage); // Refresh the list of accounts
+                    } else {
+                        alert('There was an error deleting the account.');
+                    }
+                })
+                .catch(error => console.error('Error deleting account:', error));
+        }
+    }
+
 
     // Function to fetch the total number of players/accounts and update page count
     function fetchTotalAccountsAndUpdatePages() {
@@ -111,7 +152,7 @@
         for (let page = 1; page <= totalPages; page++) {
             const button = document.createElement('button');
             button.innerText = page;
-            button.addEventListener('click', function() {
+            button.addEventListener('click', function () {
                 currentPage = page;
                 fetchPlayers(currentPage, accountsPerPage);
             });
@@ -139,15 +180,14 @@
     }
 
 
-
-    document.getElementById('accountCountDropdown').addEventListener('change', function() {
+    document.getElementById('accountCountDropdown').addEventListener('change', function () {
         accountsPerPage = parseInt(this.value, 10);
         fetchTotalAccountsAndUpdatePages(); // Recalculate total pages and update view
         fetchPlayers(currentPage, accountsPerPage); // Fetch players for the current page with new page size
     });
 
     // Initial calls
-    window.onload = function() {
+    window.onload = function () {
         fetchPlayers(currentPage, accountsPerPage);
         fetchTotalAccountsAndUpdatePages(); // Get initial total accounts and calculate pages
     };
