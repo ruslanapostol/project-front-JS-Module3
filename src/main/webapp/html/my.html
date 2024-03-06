@@ -23,13 +23,38 @@
     <!-- Data rows will go here -->
     </tbody>
 </table>
+
+<div id="accountDisplayOptions">
+    <label for="accountCountDropdown">Accounts to display:</label>
+    <select id="accountCountDropdown">
+        <option value="3">3</option>
+        <option value="5">5</option>
+        <option value="10">10</option>
+        <option value="15">15</option>
+        <option value="20">20</option>
+    </select>
+</div>
+
+<!-- Paging buttons section -->
+<div id="pagingButtons">
+    <button>Prev</button>
+    <button>1</button>
+    <button>2</button>
+    <button>3</button>
+    <button>4</button>
+    <button>5</button>
+    <button>Next</button>
+</div>
 <script>
-    // Function to fetch players and add them to the table
-    function fetchPlayers() {
-        fetch('/rest/players')
+    let currentPage = 1;
+    let accountsPerPage = parseInt(document.getElementById('accountCountDropdown').value, 10);
+    function fetchPlayers(pageNumber, pageSize) {
+        const url = `/rest/players?pageNumber=${pageNumber}&pageSize=${pageSize}`;
+        fetch(url)
             .then(response => response.json())
             .then(players => {
                 const table = document.getElementById('rpgTable').getElementsByTagName('tbody')[0];
+                table.innerHTML = "";
                 players.forEach((player, index) => {
                     const row = table.insertRow();
                     const cell1 = row.insertCell(0);
@@ -40,7 +65,7 @@
                     const cell6 = row.insertCell(5);
                     const cell7 = row.insertCell(6);
                     const cell8 = row.insertCell(7);
-                    cell1.innerHTML = index + 1;
+                    cell1.innerHTML = ((pageNumber -1) * pageSize) + index + 1;
                     cell2.innerHTML = player.name;
                     cell3.innerHTML = player.title;
                     cell4.innerHTML = player.race;
@@ -53,8 +78,71 @@
             .catch(error => console.error('Error fetching players:', error));
     }
 
-    // Call the function when the window loads
-    window.onload = fetchPlayers;
+    // Function to fetch the total number of players/accounts and update page count
+    function fetchTotalAccountsAndUpdatePages() {
+        fetch('/rest/players/count')
+            .then(response => response.json())
+            .then(totalCount => {
+                totalAccounts = totalCount;
+                updateTotalPages();
+            })
+            .catch(error => console.error('Error fetching total accounts:', error));
+    }
+
+    function updateTotalPages() {
+        const totalPages = Math.ceil(totalAccounts / accountsPerPage);
+        const pagingButtons = document.getElementById('pagingButtons');
+        // Clear existing buttons before adding new ones
+        pagingButtons.innerHTML = '';
+
+        // Create and append new pagination buttons
+        for (let page = 1; page <= totalPages; page++) {
+            const button = document.createElement('button');
+            button.innerText = page;
+            button.addEventListener('click', function() {
+                currentPage = page;
+                fetchPlayers(currentPage, accountsPerPage);
+            });
+            pagingButtons.appendChild(button);
+        }
+
+        // Optionally, add 'Prev' and 'Next' buttons
+        const prevButton = document.createElement('button');
+        prevButton.innerText = 'Prev';
+        prevButton.onclick = () => {
+            if (currentPage > 1) {
+                currentPage--;
+                fetchPlayers(currentPage, accountsPerPage);
+            }
+        };
+        pagingButtons.insertBefore(prevButton, pagingButtons.firstChild); // Add 'Prev' at the beginning
+
+        const nextButton = document.createElement('button');
+        nextButton.innerText = 'Next';
+        nextButton.onclick = () => {
+            if (currentPage < totalPages) {
+                currentPage++;
+                fetchPlayers(currentPage, accountsPerPage);
+            }
+        };
+        pagingButtons.appendChild(nextButton); // Add 'Next' at the end
+
+        console.log('Total pages:', totalPages);
+    }
+
+
+
+    document.getElementById('accountCountDropdown').addEventListener('change', function() {
+        accountsPerPage = parseInt(this.value, 10);
+        fetchTotalAccountsAndUpdatePages(); // Recalculate total pages and update view
+        fetchPlayers(currentPage, accountsPerPage); // Fetch players for the current page with new page size
+    });
+
+    // Initial calls
+    window.onload = function() {
+        fetchPlayers(currentPage, accountsPerPage);
+        fetchTotalAccountsAndUpdatePages(); // Get initial total accounts and calculate pages
+    };
 </script>
 
 </body>
