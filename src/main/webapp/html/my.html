@@ -148,7 +148,7 @@
         });
         pagingButtons.appendChild(prevButton);
 
-        // Add page number buttons
+
         for (let page = 1; page <= totalPages; page++) {
             const button = document.createElement('button');
             button.innerText = page;
@@ -157,9 +157,9 @@
                 fetchPlayers(currentPage, accountsPerPage);
             });
 
-            // Highlight the current page button
+
             if (page === currentPage) {
-                button.className = 'active'; // Add 'active' class to highlight the current page
+                button.className = 'active';
             }
 
             pagingButtons.appendChild(button);
@@ -174,7 +174,7 @@
                 fetchPlayers(currentPage, accountsPerPage);
             }
         });
-        pagingButtons.appendChild(nextButton); // Add 'Next' at the end
+        pagingButtons.appendChild(nextButton);
 
         console.log('Total pages:', totalPages);
     }
@@ -182,14 +182,76 @@
 
     document.getElementById('accountCountDropdown').addEventListener('change', function () {
         accountsPerPage = parseInt(this.value, 10);
-        fetchTotalAccountsAndUpdatePages(); // Recalculate total pages and update view
-        fetchPlayers(currentPage, accountsPerPage); // Fetch players for the current page with new page size
+        fetchTotalAccountsAndUpdatePages();
+        fetchPlayers(currentPage, accountsPerPage);
     });
 
-    // Initial calls
+    function editPlayer(playerId) {
+        const table = document.getElementById('rpgTable');
+        const rows = table.getElementsByTagName('tbody')[0].rows;
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            if (row.cells[0].innerText === ((currentPage - 1) * accountsPerPage + i + 1).toString()) {
+                const editCell = row.cells[8];
+                const deleteCell = row.cells[9];
+
+                if (editCell.children[0].getAttribute('src').includes('edit')) {
+                    for (let j = 0; j <= 5 ; j++) {
+                        const input = document.createElement('input');
+                        input.type = 'text';
+                        input.value = row.cells[j].innerText;
+                        row.cells[j].innerText = '';
+                        row.cells[j].appendChild(input);
+                    }
+
+                    deleteCell.style.display = 'none';
+                    editCell.children[0].src = '/img/colored_save.jpg';
+                } else {
+                    const updatedData = {
+                        name: row.cells[1].children[0].value,
+                        title: row.cells[2].children[0].value,
+                        race: row.cells[3].children[0].value,
+                        profession: row.cells[4].children[0].value,
+                        banned: row.cells[5].children[0].value
+                    };
+
+                    // Send POST request to server to save the updated data
+                    fetch(`/rest/players/${playerId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(updatedData)
+                    })
+                        .then(response => {
+                            if (response.ok) {
+                                // Success feedback
+                                alert('Player updated successfully.');
+                                fetchPlayers(currentPage, accountsPerPage);
+                            } else {
+                                alert('Failed to update player.');
+                                response.json().then(data => console.log(data));
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error updating player:', error);
+                            alert('Error updating player.');
+                        });
+
+                    
+                    deleteCell.style.display = '';
+                    editCell.children[0].src = '/img/colored_edit.jpg';
+
+                }
+                break;
+            }
+        }
+    }
+
     window.onload = function () {
         fetchPlayers(currentPage, accountsPerPage);
-        fetchTotalAccountsAndUpdatePages(); // Get initial total accounts and calculate pages
+        fetchTotalAccountsAndUpdatePages();
     };
 </script>
 
