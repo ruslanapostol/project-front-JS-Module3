@@ -1,31 +1,150 @@
+/* General styling */
+body {
+    font-family: 'Georgia', serif; /* Gives a more 'medieval' or 'fantasy' feel */
+    margin: 0 auto;
+    padding: 20px;
+    max-width: 960px;
+    background-color: #faf8f5;
+    color: #3e3a32; /* A darker, ink-like color for text */
+}
+
+h1 {
+    color: #5D4E46;
+    text-align: center;
+    font-size: 2.5rem; /* Larger size for main title */
+}
+
+h3 {
+    color: #5D4E46;
+    text-align: center;
+    font-size: 1.8rem;
+}
+
+/* Table styling */
 #rpgTable {
-    border-collapse: collapse;
+    border-collapse: separate; /* Allows for spacing between rows */
+    border-spacing: 0 10px; /* Spacing between rows */
     width: 100%;
+    font-size: 1rem;
 }
 
-#rpgTable th, #rpgTable td {
-    border: 1px solid black;
+#rpgTable th {
+    background-color: #8C746A; /* A dark wood-like color */
+    color: #FFF;
     text-align: left;
-    padding: 8px;
+    padding: 12px;
+    font-size: 1.2rem;
 }
 
-#rpgTable tr:nth-child(even) {
-    background-color: #f2f2f2;
+#rpgTable td {
+    background-color: #FFF; /* Contrast with the dark headers */
+    padding: 10px;
+    border: 1px solid #DDD; /* Slight border for each cell */
 }
 
-#pagingButtons button.active {
-    background-color: #4CAF50; /* Green background for the active page */
-    color: white; /* White text color */
-    border-radius: 5px; /* Rounded corners */
+#rpgTable tr:nth-child(even) td {
+    background-color: #f4e9e2; /* A lighter, parchment-like color */
 }
+
+/* Button and Icons Styling */
+#pagingButtons button, .action-icon, button {
+    background-color: #947860; /* Earthy, leather-like color */
+    color: #FFF;
+    padding: 8px 15px;
+    margin: 5px;
+    border: none;
+    border-radius: 5px; /* Slightly rounded edges */
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s; /* Smooth transition for hover effect */
+}
+
+#pagingButtons button:hover, button:hover {
+    background-color: #b59a82; /* Lighter color on hover */
+}
+
 .action-icon {
     cursor: pointer;
-    width: auto;
-    height: 30px;
-    max-width: 100%;
-    max-height: 100%;
+    width: 24px; /* Slightly larger for easier interaction */
+    height: 24px;
+    transition: transform 0.2s; /* Smooth scaling on hover */
 }
 
+.action-icon:hover {
+    transform: scale(1.2); /* Slight enlargement on hover */
+}
 
+/* Input and Select Styles */
+input[type=text], input[type=number], input[type=date], select {
+    width: 100%;
+    padding: 8px;
+    margin: 8px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+    box-shadow: inset 0 1px 3px #ddd; /* Inner shadow for depth */
+}
 
+input[type=checkbox] {
+    margin-top: 12px; /* Align better with other form elements */
+}
 
+/* Specific sections styling */
+#newAccountSection, #accountDisplayContainer {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px; /* More pronounced rounded corners */
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1); /* Soft shadow for depth */
+    margin-top: 30px;
+    border: 1px solid #ddd; /* Subtle border */
+}
+
+label {
+    display: block; /* Makes labels display on their own line */
+    margin-bottom: 5px; /* Spacing between label and input */
+    font-weight: bold;
+}
+
+/* Responsive design adjustments */
+@media screen and (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    h1 {
+        font-size: 2rem; /* Adjust size for smaller screens */
+    }
+
+    h3 {
+        font-size: 1.5rem;
+    }
+
+    #rpgTable th, #rpgTable td {
+        padding: 8px; /* Smaller padding on smaller screens */
+    }
+}
+
+@media screen and (max-width: 480px) {
+    #rpgTable, #rpgTable thead, #rpgTable tbody, #rpgTable th, #rpgTable td, #rpgTable tr {
+        display: block;
+    }
+
+    #rpgTable tr {
+        margin-bottom: 15px;
+    }
+
+    #rpgTable td {
+        text-align: right;
+        padding-left: 50%; /* Make space for labels */
+        position: relative;
+    }
+
+    #rpgTable td:before {
+        content: attr(data-label);
+        position: absolute;
+        left: 10px;
+        top: 10px;
+        text-align: left;
+        font-weight: bold;
+    }
+}
