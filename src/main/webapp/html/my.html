@@ -387,7 +387,7 @@
     }
 
 
-    document.addEventListener('DOMContentLoaded', (event) => {
+    document.addEventListener('DOMContentLoaded', () => {
         currentPage = 1;
         accountsPerPage = parseInt(document.getElementById('accountCountDropdown').value, 10);
         fetchPlayers(currentPage, accountsPerPage);
