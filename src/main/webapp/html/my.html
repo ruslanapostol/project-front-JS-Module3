@@ -9,7 +9,7 @@
 <h1>RPG admin panel</h1>
 
 <table id="rpgTable">
-<thead>
+    <thead>
     <tr>
         <th>#</th>
         <th>Name</th>
@@ -22,7 +22,7 @@
         <th>Edit</th>
         <th>Delete</th>
     </tr>
-</thead>
+    </thead>
 
     <tbody>
     <!-- Player rows will go here -->
@@ -52,17 +52,17 @@
 </div>
 
 
-<hr> <!-- Horizontal line -->
+<hr>
 <div id="newAccountSection">
     <h3>Create a New Account:</h3>
     <label for="newName">Name (1-12 characters):</label>
-    <input type="text" id="newName" maxlength="12" required><br>
+    <input type="text" id="newName" maxlength="12" minlength="1" required><br>
 
     <label for="newTitle">Title (1-30 characters):</label>
-    <input type="text" id="newTitle" maxlength="30" required><br>
+    <input type="text" id="newTitle" maxlength="30" minlength="1" required><br>
 
     <label for="newRace">Race:</label>
-    <select id="newRace">
+    <select id="newRace" required>
         <option value="Human">Human</option>
         <option value="Elf">Elf</option>
         <option value="Dwarf">Dwarf</option>
@@ -74,7 +74,7 @@
     </select><br>
 
     <label for="newProfession">Profession:</label>
-    <select id="newProfession">
+    <select id="newProfession" required>
         <option value="Warrior">Warrior</option>
         <option value="Mage">Mage</option>
         <option value="Archer">Archer</option>
@@ -134,17 +134,40 @@
             .catch(error => console.error('Error fetching players:', error));
     }
 
-
-    function submitNewAccount() {
+    function validateNewAccountData() {
         const name = document.getElementById('newName').value;
         const title = document.getElementById('newTitle').value;
-        // Add more validations as needed
+        const level = parseInt(document.getElementById('newLevel').value, 10);
+        const birthday = new Date(document.getElementById('newBirthday').value);
+        const today = new Date();
+
+
         if (name.length < 1 || name.length > 12) {
             alert('Name must be between 1 and 12 characters');
-            return;
+            return false;
         }
+
         if (title.length < 1 || title.length > 30) {
             alert('Title must be between 1 and 30 characters');
+            return false;
+        }
+
+        if (isNaN(level) || level < 0 || level > 100) {
+            alert('Level must be a number between 0 and 100');
+            return false;
+        }
+
+        if (birthday.getTime() > today.getTime()) {
+            alert('Birthday cannot be in the future');
+            return false;
+        }
+
+        return true; // Data is valid
+    }
+
+    function submitNewAccount() {
+
+        if (!validateNewAccountData()) {
             return;
         }
 
@@ -168,14 +191,7 @@
             body: JSON.stringify(newAccountData)
         })
             .then(response => {
-                if (response.ok) {
-                    return response.json(); // or `return;` if your API doesn't send back any content
-                } else {
-                    throw new Error('Failed to create account');
-                }
-            })
-            .then(() => {
-                // Clear input fields
+                if (!response.ok) throw new Error('Failed to create new account');
                 document.getElementById('newName').value = '';
                 document.getElementById('newTitle').value = '';
                 document.getElementById('newRace').selectedIndex = 0;
@@ -185,11 +201,12 @@
                 document.getElementById('newBanned').checked = false;
 
                 // Refresh the list of accounts
-                fetchPlayers(currentPage, accountsPerPage);
+                fetchPlayers(currentPage, accountsPerPage); // Make sure this function correctly fetches and displays the updated list
+                alert('New account created successfully'); // Provide user feedback
             })
             .catch(error => {
                 console.error('Error creating new account:', error);
-                alert(error.message); // Show error message to user
+                alert('Error creating new account'); // Provide user feedback
             });
     }
 
@@ -207,9 +224,13 @@
                         alert('There was an error deleting the account.');
                     }
                 })
-                .catch(error => console.error('Error deleting account:', error));
+                .catch(error => {
+                    console.error('Error deleting account:', error)
+                    alert('Error deleting account.');
+                });
         }
     }
+
 
     let totalAccounts = 0;
 
@@ -246,6 +267,7 @@
             button.onclick = () => {
                 currentPage = page;
                 fetchPlayers(currentPage, accountsPerPage);
+                updateTotalPages();
             };
 
             button.className = page === currentPage ? 'active' : '';
@@ -266,12 +288,6 @@
     }
 
 
-    document.getElementById('accountCountDropdown').addEventListener('change', function () {
-        accountsPerPage = parseInt(this.value, 10);
-        fetchTotalAccountsAndUpdatePages();
-        fetchPlayers(currentPage, accountsPerPage);
-    });
-
     function editPlayer(playerId) {
         const table = document.getElementById('rpgTable');
         const rows = table.getElementsByTagName('tbody')[0].rows;
@@ -280,111 +296,155 @@
             const row = rows[i];
             const rowPlayerId = row.getAttribute('data-player-id');
 
-
             if (rowPlayerId === playerId) {
-                const editCell = row.cells[8]; // Assuming the edit icon is in the 9th cell
-                const deleteCell = row.cells[9]; // Assuming the delete icon is in the 10th cell
+                const editCell = row.cells[8]; // Assuming the 'Edit' icon is in the 9th cell
+                const deleteCell = row.cells[9];
 
-                // Determine whether we're currently in edit mode based on the presence of input fields
-                const isInEditMode = row.querySelector('input') !== null;
+                const isEditing = row.hasAttribute('data-editing');
 
-                if (!isInEditMode) {
+                if (!isEditing) {
                     // Entering edit mode
+                    row.setAttribute('data-editing', true); // Mark the row as being edited
                     enterEditMode(row);
-                    // Change the edit icon to a save icon
                     editCell.children[0].src = '/img/colored_save.jpg';
-                    // Hide the delete button
-                    deleteCell.style.display = 'none';
+                    deleteCell.style.display = 'none'; // Hide 'Delete' button
                 } else {
-                    // Exiting edit mode, collect data to update
-                    const updatedData = exitEditMode(row);
-
-                    // Send POST request to server to save the updated data
-                    fetch(`/rest/players/${playerId}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(updatedData)
-                    })
-                        .then(response => {
-                            if (response.ok) {
-                                // If the update was successful, refresh the data displayed
-                                fetchPlayers(currentPage, accountsPerPage);
-                                alert('Player updated successfully.');
-                            } else {
-                                // If there was an issue with the update
-                                alert('Failed to update player.');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error updating player:', error);
-                            alert('Error updating player.');
-                        });
-
-                    // Change the save icon back to an edit icon
-                    editCell.children[0].src = '/img/colored_edit.jpg';
-                    // Show the delete button again
-                    deleteCell.style.display = '';
+                    row.removeAttribute('data-editing'); // Remove the editing marker
+                    exitEditMode(row, playerId);
+                    editCell.children[0].src = '/img/colored_edit.jpg'; // Change 'Save' icon back to 'Edit'
+                    deleteCell.style.display = ''; // Show 'Delete' button again
                 }
-                break; // Exit the loop after finding and handling the correct row
+                break;
             }
         }
     }
 
     function enterEditMode(row) {
-        for (let j = 1; j < row.cells.length - 2; j++) {  // Skip first and last two cells (ID, edit, delete)
+        const races = ['Human', 'Elf', 'Dwarf', 'Orc', 'Troll', 'Giant', 'Hobbit'];
+        const professions = ['Warrior', 'Mage', 'Rogue', 'Cleric', 'Paladin', 'Sorcerer', 'Nazgul', 'Warlock', 'Druid'];
+
+        const fields = ['Name', 'Title', 'Race', 'Profession', 'Level', 'Birthday', 'Banned'];
+
+        for (let j = 1; j <= fields.length; j++) {
             const cell = row.cells[j];
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.value = cell.innerText;
-            cell.innerText = '';  // Clear existing text
-            cell.appendChild(input);  // Add input field
+            const oldValue = cell.innerText.trim(); // Trim white spaces
+            let input;
+
+            switch (fields[j - 1]) {
+                case 'Race':
+                    input = document.createElement('select');
+                    races.forEach(race => {
+                        const option = document.createElement('option');
+                        option.value = race;
+                        option.text = race;
+                        option.selected = race === oldValue;
+                        input.appendChild(option);
+                    });
+                    break;
+                case 'Profession':
+                    input = document.createElement('select');
+                    professions.forEach(profession => {
+                        const option = document.createElement('option');
+                        option.value = profession;
+                        option.text = profession;
+                        option.selected = profession === oldValue;
+                        input.appendChild(option);
+                    });
+                    break;
+                case 'Banned':
+                    input = document.createElement('input');
+                    input.type = 'checkbox';
+                    input.checked = oldValue.toLowerCase() === 'yes';
+                    break;
+                case 'Level':
+                    input = document.createElement('input');
+                    input.type = 'number';
+                    input.value = oldValue;
+                    break;
+                case 'Birthday':
+                    input = document.createElement('input');
+                    input.type = 'date';
+                    input.value = oldValue;
+                    break;
+                default: // Default case for 'Name' and 'Title'
+                    input = document.createElement('input');
+                    input.type = 'text';
+                    input.value = oldValue;
+                    break;
+            }
+
+            input.className = 'edit-mode-input';
+            cell.innerHTML = '';
+            cell.appendChild(input);
         }
     }
 
-    function exitEditMode(row) {
-        // Object to store the updated player data
+
+    function exitEditMode(row, playerId) {
+        // Object to collect updated player data
         const updatedData = {};
 
-        // Extract and revert the 'Name' field
-        const nameInput = row.cells[1].children[0];
-        updatedData.name = nameInput.value;
-        row.cells[1].innerText = nameInput.value;
+        // Assuming the same order and fields as in enterEditMode
+        const fields = ['Name', 'Title', 'Race', 'Profession', 'Level', 'Birthday', 'Banned'];
+        const inputs = row.querySelectorAll('.edit-mode-input'); // Get all editable inputs in the row
 
-        // Extract and revert the 'Title' field
-        const titleInput = row.cells[2].children[0];
-        updatedData.title = titleInput.value;
-        row.cells[2].innerText = titleInput.value;
+        fields.forEach((field, index) => {
+            let value;
+            if (field === 'Banned') {
+                value = inputs[index].checked; // For checkbox
+            } else {
+                value = inputs[index].value; // For other inputs
+            }
+            updatedData[field.toLowerCase()] = value; // Add field value to data object
+        });
 
-        // Extract and revert the 'Race' field
-        const raceInput = row.cells[3].children[0];
-        updatedData.race = raceInput.value;
-        row.cells[3].innerText = raceInput.value;
+        // Hide save and show delete icon again in the UI
+        const editCell = row.cells[8]; // Assuming 'Edit' icon is in the 9th cell
+        const deleteCell = row.cells[9]; // Assuming 'Delete' icon is in the 10th cell
+        editCell.children[0].src = '/img/colored_edit.jpg'; // Change 'Save' icon back to 'Edit'
+        deleteCell.style.display = ''; // Show 'Delete' button again
 
-        // Extract and revert the 'Profession' field
-        const professionInput = row.cells[4].children[0];
-        updatedData.profession = professionInput.value;
-        row.cells[4].innerText = professionInput.value;
+        // Send the updated data to the server
+        fetch(`/rest/players/${playerId}`, {
+            method: 'POST', // Use POST or PUT according to your API specification
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updatedData)
+        })
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to update player');
+                return response.json(); // Or handle as needed if no response expected
+            })
+            .then(() => {
+                alert('Player updated successfully.');
+                // Refresh data displayed on the current page
+                fetchPlayers(currentPage, accountsPerPage);
+            })
+            .catch(error => {
+                console.error('Error updating player:', error);
+                alert('Error updating player.');
+            });
 
-        // Extract and revert the 'Level' field
-        const levelInput = row.cells[5].children[0];
-        updatedData.level = parseInt(levelInput.value, 10); // Ensure this is an integer
-        row.cells[5].innerText = levelInput.value;
+        // Convert input fields back to text in the UI
+        fields.forEach((field, index) => {
+            const cell = row.cells[index + 1]; // Adjust index based on your actual table structure
+            if (field === 'Banned') {
+                cell.innerText = updatedData[field.toLowerCase()] ? 'Yes' : 'No'; // Convert boolean to text
+            } else {
+                cell.innerText = updatedData[field.toLowerCase()]; // Revert other fields to text
+            }
+        });
 
-        // Extract and revert the 'Birthday' field (assuming date is in 'YYYY-MM-DD' format)
-        const birthdayInput = row.cells[6].children[0];
-        updatedData.birthday = birthdayInput.value; // Keep as string or convert to timestamp as needed
-        // Adjust how you convert/display the birthday if necessary
-        row.cells[6].innerText = new Date(birthdayInput.value).toLocaleDateString();
-
-        // Extract and revert the 'Banned' field
-        const bannedInput = row.cells[7].children[0];
-        updatedData.banned = bannedInput.checked; // Assuming this is a checkbox
-        row.cells[7].innerText = bannedInput.checked ? 'Yes' : 'No';
-
-        return updatedData; // Return the compiled data for the updated player
+        row.removeAttribute('data-editing');
     }
+
+
+    document.getElementById('accountCountDropdown').addEventListener('change', function () {
+        accountsPerPage = parseInt(this.value, 10);
+        fetchTotalAccountsAndUpdatePages();
+        fetchPlayers(currentPage, accountsPerPage);
+    });
 
 
     document.addEventListener('DOMContentLoaded', () => {

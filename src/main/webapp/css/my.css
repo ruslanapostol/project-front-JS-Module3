@@ -56,12 +56,18 @@ h3 {
     border-radius: 5px; /* Slightly rounded edges */
     cursor: pointer;
     font-weight: bold;
-    transition: background-color 0.3s; /* Smooth transition for hover effect */
+    transition: background-color 0.3s;
 }
 
 #pagingButtons button:hover, button:hover {
     background-color: #b59a82; /* Lighter color on hover */
 }
+
+#pagingButtons button.active-page {
+    background-color: #4CAF50; /* Example color: green */
+    color: white;
+}
+
 
 .action-icon {
     cursor: pointer;
