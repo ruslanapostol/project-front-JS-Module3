@@ -47,6 +47,11 @@ h3 {
 }
 
 /* Button and Icons Styling */
+#pagingButtons button.active-page {
+    background-color: #4CAF50; /* Example color: green */
+    color: white;
+}
+
 #pagingButtons button, .action-icon, button {
     background-color: #947860; /* Earthy, leather-like color */
     color: #FFF;
@@ -63,10 +68,6 @@ h3 {
     background-color: #b59a82; /* Lighter color on hover */
 }
 
-#pagingButtons button.active-page {
-    background-color: #4CAF50; /* Example color: green */
-    color: white;
-}
 
 
 .action-icon {

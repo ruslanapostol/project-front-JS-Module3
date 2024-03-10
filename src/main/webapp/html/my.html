@@ -296,15 +296,14 @@
             const row = rows[i];
             const rowPlayerId = row.getAttribute('data-player-id');
 
-            if (rowPlayerId === playerId) {
+            if (rowPlayerId === playerId.toString()) {
                 const editCell = row.cells[8]; // Assuming the 'Edit' icon is in the 9th cell
                 const deleteCell = row.cells[9];
 
-                const isEditing = row.hasAttribute('data-editing');
+                const isEditing = row.getAttribute('data-editing') === 'true';
 
                 if (!isEditing) {
-                    // Entering edit mode
-                    row.setAttribute('data-editing', true); // Mark the row as being edited
+                    row.setAttribute('data-editing', 'true');
                     enterEditMode(row);
                     editCell.children[0].src = '/img/colored_save.jpg';
                     deleteCell.style.display = 'none'; // Hide 'Delete' button
@@ -398,11 +397,11 @@
             updatedData[field.toLowerCase()] = value; // Add field value to data object
         });
 
-        // Hide save and show delete icon again in the UI
-        const editCell = row.cells[8]; // Assuming 'Edit' icon is in the 9th cell
-        const deleteCell = row.cells[9]; // Assuming 'Delete' icon is in the 10th cell
-        editCell.children[0].src = '/img/colored_edit.jpg'; // Change 'Save' icon back to 'Edit'
-        deleteCell.style.display = ''; // Show 'Delete' button again
+
+        const editCell = row.cells[8];
+        const deleteCell = row.cells[9];
+        editCell.children[0].src = '/img/colored_edit.jpg';
+        deleteCell.style.display = '';
 
         // Send the updated data to the server
         fetch(`/rest/players/${playerId}`, {
@@ -438,14 +437,6 @@
 
         row.removeAttribute('data-editing');
     }
-
-
-    document.getElementById('accountCountDropdown').addEventListener('change', function () {
-        accountsPerPage = parseInt(this.value, 10);
-        fetchTotalAccountsAndUpdatePages();
-        fetchPlayers(currentPage, accountsPerPage);
-    });
-
 
     document.addEventListener('DOMContentLoaded', () => {
         currentPage = 1;
